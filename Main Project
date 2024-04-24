@@ -1,0 +1,163 @@
+import random
+
+class Pokemon:
+    def __init__(self, name, level, type):
+        self.name = name
+        self.level = level
+        self.type = type
+        self.max_health = level * 5
+        self.current_health = self.max_health
+        self.is_knocked_out = False
+
+    def lose_health(self, damage):
+        self.current_health -= damage
+        if self.current_health <= 0:
+            self.current_health = 0
+            self.knock_out()
+
+    def gain_health(self, heal):
+        self.current_health += heal
+        if self.current_health > self.max_health:
+            self.current_health = self.max_health
+
+    def knock_out(self):
+        self.is_knocked_out = True
+        print(f"{self.name} is knocked out!")
+
+    def revive(self):
+        self.is_knocked_out = False
+        self.current_health = self.max_health
+        print(f"{self.name} has been revived!")
+
+    def attack(self, opponent):
+        effectiveness = 1
+        if self.type == "Fire" and opponent.type == "Grass":
+            effectiveness = 2
+        elif self.type == "Grass" and opponent.type == "Water":
+            effectiveness = 2
+        elif self.type == "Water" and opponent.type == "Fire":
+            effectiveness = 2
+        elif self.type == "Fire" and opponent.type == "Water":
+            effectiveness = 0.5
+        elif self.type == "Water" and opponent.type == "Grass":
+            effectiveness = 0.5
+        elif self.type == "Grass" and opponent.type == "Fire":
+            effectiveness = 0.5
+        
+        damage = (self.level * 2) * effectiveness
+        print(f"{self.name} attacks {opponent.name} and deals {damage} damage.")
+        opponent.lose_health(damage)
+
+
+class Trainer:
+    def __init__(self, name):
+        self.name = name
+        self.potions = 3
+        self.active_pokemon = None
+        self.pokemon_party = []
+
+    def use_potion(self):
+        if self.potions > 0:
+            if self.active_pokemon:
+                self.active_pokemon.gain_health(20)
+                print(f"{self.active_pokemon.name} regained 20 health.")
+                self.potions -= 1
+                print(f"{self.name} has {self.potions} potions left.")
+            else:
+                print("You don't have an active Pokémon!")
+        else:
+            print("You don't have any potions left!")
+
+    def switch_pokemon(self, index):
+        if 0 <= index < len(self.pokemon_party):
+            if not self.pokemon_party[index].is_knocked_out:
+                self.active_pokemon = self.pokemon_party[index]
+                print(f"{self.name} switched to {self.active_pokemon.name}.")
+            else:
+                print("This Pokémon is knocked out!")
+        else:
+            print("Invalid index!")
+
+    def attack_trainer(self, opponent):
+        if self.active_pokemon and opponent.active_pokemon:
+            self.active_pokemon.attack(opponent.active_pokemon)
+        elif not self.active_pokemon:
+            print("You don't have an active Pokémon!")
+        elif not opponent.active_pokemon:
+            print(f"{opponent.name} doesn't have an active Pokémon!")
+
+    def catch_pokemon(self, pokemon):
+        if len(self.pokemon_party) < 6:
+            self.pokemon_party.append(pokemon)
+            print(f"{self.name} caught {pokemon.name}!")
+        else:
+            print("Your party is full! You can't catch more Pokémon.")
+
+
+def main():
+    # Creating Pokémon
+    bulbasaur = Pokemon("Bulbasaur", 5, "Grass")
+    charmander = Pokemon("Charmander", 5, "Fire")
+    squirtle = Pokemon("Squirtle", 5, "Water")
+    
+    # Creating Trainers
+    player = Trainer("Ash")
+    opponent = Trainer("Gary")
+
+    # Player chooses a starter Pokémon
+    print("Choose your starter Pokémon:")
+    print("1. Bulbasaur (Grass)")
+    print("2. Charmander (Fire)")
+    print("3. Squirtle (Water)")
+    choice = input("Enter the number corresponding to your choice: ")
+    if choice == '1':
+        player.active_pokemon = bulbasaur
+    elif choice == '2':
+        player.active_pokemon = charmander
+    elif choice == '3':
+        player.active_pokemon = squirtle
+    else:
+        print("Invalid choice! Defaulting to Bulbasaur.")
+        player.active_pokemon = bulbasaur
+
+    print(f"You chose {player.active_pokemon.name}!")
+
+    # Start battling
+    while True:
+        print("\nChoose your action:")
+        print("1. Attack")
+        print("2. Use Potion")
+        print("3. Switch Pokémon")
+        print("4. Catch Pokémon")
+        print("5. Quit")
+        action = input("Enter the number corresponding to your action: ")
+
+        if action == '1':
+            player.attack_trainer(opponent)
+            if opponent.active_pokemon.current_health <= 0:
+                print(f"{opponent.name}'s {opponent.active_pokemon.name} fainted!")
+                opponent.switch_pokemon(random.randint(0, len(opponent.pokemon_party)-1))
+        elif action == '2':
+            player.use_potion()
+        elif action == '3':
+            print("Your Pokémon:")
+            for i, pokemon in enumerate(player.pokemon_party):
+                print(f"{i}. {pokemon.name} ({pokemon.type}) - Level {pokemon.level}")
+            choice = int(input("Choose the index of the Pokémon you want to switch to: "))
+            player.switch_pokemon(choice)
+        elif action == '4':
+            wild_pokemon = Pokemon("Wild Pokemon", random.randint(1, 10), random.choice(["Grass", "Fire", "Water"]))
+            print(f"A wild {wild_pokemon.name} appeared! Level {wild_pokemon.level}, Type: {wild_pokemon.type}")
+            catch_attempt = random.random()  # Random chance of catching the wild Pokémon
+            if catch_attempt < 0.5:
+                player.catch_pokemon(wild_pokemon)
+            else:
+                print(f"{wild_pokemon.name} escaped!")
+        elif action == '5':
+            print("Thanks for playing!")
+            break
+        else:
+            print("Invalid choice!")
+
+if __name__ == "__main__":
+    main()
